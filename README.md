@@ -8,4 +8,4 @@ $ python create.db
 ```
 
 ## 備考
-* [front](https://github.com/atsuo1203/TwitterAuthTest)
+* [front](https://github.com/atsuo1203/twitter_auth_test)
