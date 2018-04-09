@@ -4,13 +4,16 @@ from flaskr.models import User
 import json
 import re
 import tweepy
-
-
-auth = tweepy.OAuthHandler('', '')
+import yaml
 
 
 @app.route('/authorize')
 def authorize():
+    with open('flaskr/secret.yaml') as f:
+        obj = yaml.load(f)
+        consumer_key = obj.get('ConsumerKey')
+        secret_key = obj.get('ConsumerSecret')
+    auth = tweepy.OAuthHandler(consumer_key, secret_key)
     url = auth.get_authorization_url()
     url = re.sub('authorize', 'authenticate', url)
     return redirect(url)
@@ -22,7 +25,7 @@ def show_users():
         data = json.loads(request.data.decode('utf-8'))
         user = User(
             name=data['name'],
-            description=data['description']
+            token=data['token']
         )
         db.session.add(user)
         db.session.commit()
@@ -31,7 +34,7 @@ def show_users():
     users = User.query.all()
     results = []
     for user in users:
-        results.append(result_json(user))
+        results.append(user.to_json())
     return make_response(jsonify(results))
 
 
@@ -44,9 +47,9 @@ def show_user(user_id):
     if request.method == 'PUT':
         data = json.loads(request.data.decode('utf-8'))
         user.name = data['name']
-        user.description = data['description']
+        user.token = data['token']
         db.session.commit()
-        return make_response(jsonify(result_json(user)))
+        return make_response(jsonify(user.to_json()))
 
     if request.method == 'DELETE':
         db.session.delete(user)
@@ -54,7 +57,7 @@ def show_user(user_id):
         return make_response(jsonify([]))
 
     # if request == get
-    return make_response(jsonify(result_json(user)))
+    return make_response(jsonify(user.to_json()))
 
 
 @app.route('/add_sample')
@@ -62,7 +65,7 @@ def add_sample_user():
     user_id = User.query.count() + 1
     user = User(
         name=str(user_id),
-        description='description'
+        token='token'
     )
     db.session.add(user)
     db.session.commit()
@@ -78,11 +81,3 @@ def delete_all_user():
 
     return redirect(url_for('show_users'))
 
-
-def result_json(user):
-    result = {
-        "id": user.id,
-        "name": user.name,
-        "description": user.description
-    }
-    return result

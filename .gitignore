@@ -4,5 +4,5 @@ __pycache__/
 .py[cod]
 .DS_Store
 .cache/
-flasker/flasker.db
+flaskr/flaskr.db
 flaskr/secret.yaml
