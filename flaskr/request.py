@@ -9,13 +9,23 @@ import yaml
 
 @app.route('/authorize')
 def authorize():
+    '''
+    参考URL
+    https://kurozumi.github.io/tweepy/auth_tutorial.html
+    https://gin0606.hatenablog.com/entry/20110814/1313288702
+    http://pika-shi.hatenablog.com/entry/20120210/1328866010
+    '''
     with open('flaskr/secret.yaml') as f:
         obj = yaml.load(f)
         consumer_key = obj.get('ConsumerKey')
         secret_key = obj.get('ConsumerSecret')
     auth = tweepy.OAuthHandler(consumer_key, secret_key)
-    url = auth.get_authorization_url()
-    url = re.sub('authorize', 'authenticate', url)
+    try:
+        redirect_url = auth.get_authorization_url()
+    except tweepy.TweepError:
+        print('Error! Failed to get request token.')
+    # session.set('request_token', auth.request_token)
+    url = re.sub('authorize', 'authenticate', redirect_url)
     return redirect(url)
 
 
