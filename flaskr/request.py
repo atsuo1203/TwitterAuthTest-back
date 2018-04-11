@@ -22,11 +22,11 @@ def authorize():
     auth = tweepy.OAuthHandler(consumer_key, secret_key)
     try:
         redirect_url = auth.get_authorization_url()
+        url = re.sub('authorize', 'authenticate', redirect_url)
+        return redirect(url)
     except tweepy.TweepError:
         print('Error! Failed to get request token.')
     # session.set('request_token', auth.request_token)
-    url = re.sub('authorize', 'authenticate', redirect_url)
-    return redirect(url)
 
 
 @app.route('/', methods=['GET', 'POST'])
