@@ -7,6 +7,13 @@ import tweepy
 import yaml
 
 
+with open('flaskr/secret.yaml') as f:
+    obj = yaml.load(f)
+    consumer_key = obj.get('ConsumerKey')
+    secret_key = obj.get('ConsumerSecret')
+auth = tweepy.OAuthHandler(consumer_key, secret_key)
+
+
 @app.route('/authorize')
 def authorize():
     '''
@@ -15,22 +22,33 @@ def authorize():
     https://gin0606.hatenablog.com/entry/20110814/1313288702
     http://pika-shi.hatenablog.com/entry/20120210/1328866010
     '''
-    with open('flaskr/secret.yaml') as f:
-        obj = yaml.load(f)
-        consumer_key = obj.get('ConsumerKey')
-        secret_key = obj.get('ConsumerSecret')
-    auth = tweepy.OAuthHandler(consumer_key, secret_key)
     try:
         redirect_url = auth.get_authorization_url()
         url = re.sub('authorize', 'authenticate', redirect_url)
         return redirect(url)
     except tweepy.TweepError:
         print('Error! Failed to get request token.')
-    # session.set('request_token', auth.request_token)
 
 
 @app.route('/', methods=['GET', 'POST'])
 def show_users():
+    try:
+        print(auth.request_token)
+        oauth_token = request.args.get('oauth_token')
+        oauth_verifier = request.args.get('oauth_verifier')
+        auth.request_token = {'oauth_token': oauth_token,
+                              'oauth_token_secret': oauth_verifier}
+        try:
+            access_token = auth.get_access_token(oauth_verifier)
+            print(access_token)
+            api = tweepy.API(auth)
+            api.update_status('ハローワールド')
+        except tweepy.TweepError:
+            print('Error! Failed to get access token.')
+
+    except AttributeError:
+        print('エラー')
+
     if request.method == 'POST':
         data = json.loads(request.data.decode('utf-8'))
         user = User(
