@@ -41,16 +41,15 @@ def show_users():
             access_token = auth.get_access_token(oauth_verifier)
             api = tweepy.API(auth)
             me = api.me()
+            user = User()
+            user.create(
+                twitter_id=me.id,
+                name=me.screen_name,
+                access_token=auth.access_token,
+                access_token_secret=auth.access_token_secret
+            )
             print('access_token')
             print(access_token)
-            print('auth.access_token')
-            print(auth.access_token)
-            print('auth.access_token_secret')
-            print(auth.access_token_secret)
-            print('me.id')
-            print(me.id)
-            print('me.screen_name')
-            print(me.screen_name)
         except tweepy.TweepError:
             print('Error! Failed to get access token.')
 
