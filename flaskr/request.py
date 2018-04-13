@@ -41,7 +41,15 @@ def show_users():
             access_token = auth.get_access_token(oauth_verifier)
             api = tweepy.API(auth)
             me = api.me()
+            print('access_token')
+            print(access_token)
+            print('auth.access_token')
+            print(auth.access_token)
+            print('auth.access_token_secret')
+            print(auth.access_token_secret)
+            print('me.id')
             print(me.id)
+            print('me.screen_name')
             print(me.screen_name)
         except tweepy.TweepError:
             print('Error! Failed to get access token.')
@@ -55,7 +63,8 @@ def show_users():
         user.create(
             twitter_id=data['twitter_id'],
             name=data['name'],
-            token=data['token']
+            access_token=data['access_token'],
+            access_token_secret=data['access_token_secret'],
         )
 
     # if method == get
@@ -77,7 +86,8 @@ def show_user(user_id):
         update_dict = {
             'twitter_id': data['twitter_id'],
             'name': data['name'],
-            'token': data['token'],
+            'access_token': data['access_token'],
+            'access_token_secret': data['access_token_secret'],
         }
         user.update(update_dict)
         return make_response(jsonify(user.to_json()))
@@ -97,7 +107,8 @@ def add_sample_user():
     user.create(
         twitter_id=str(user_id)*10,
         name=str(user_id),
-        token='token'
+        access_token='access_token',
+        access_token_secret='access_token_secret'
     )
     return redirect(url_for('show_users'))
 
