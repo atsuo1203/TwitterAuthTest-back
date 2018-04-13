@@ -1,5 +1,5 @@
 from flask import request, redirect, url_for, make_response, jsonify
-from flaskr import app, db
+from flaskr import app
 from flaskr.models import User
 import json
 import re
@@ -32,17 +32,17 @@ def authorize():
 
 @app.route('/', methods=['GET', 'POST'])
 def show_users():
+    oauth_token = request.args.get('oauth_token')
+    oauth_verifier = request.args.get('oauth_verifier')
     try:
-        print(auth.request_token)
-        oauth_token = request.args.get('oauth_token')
-        oauth_verifier = request.args.get('oauth_verifier')
         auth.request_token = {'oauth_token': oauth_token,
                               'oauth_token_secret': oauth_verifier}
         try:
             access_token = auth.get_access_token(oauth_verifier)
-            print(access_token)
             api = tweepy.API(auth)
-            api.update_status('ハローワールド')
+            me = api.me()
+            print(me.id)
+            print(me.screen_name)
         except tweepy.TweepError:
             print('Error! Failed to get access token.')
 
@@ -51,12 +51,12 @@ def show_users():
 
     if request.method == 'POST':
         data = json.loads(request.data.decode('utf-8'))
-        user = User(
+        user = User()
+        user.create(
+            twitter_id=data['twitter_id'],
             name=data['name'],
             token=data['token']
         )
-        db.session.add(user)
-        db.session.commit()
 
     # if method == get
     users = User.query.all()
@@ -74,14 +74,16 @@ def show_user(user_id):
 
     if request.method == 'PUT':
         data = json.loads(request.data.decode('utf-8'))
-        user.name = data['name']
-        user.token = data['token']
-        db.session.commit()
+        update_dict = {
+            'twitter_id': data['twitter_id'],
+            'name': data['name'],
+            'token': data['token'],
+        }
+        user.update(update_dict)
         return make_response(jsonify(user.to_json()))
 
     if request.method == 'DELETE':
-        db.session.delete(user)
-        db.session.commit()
+        user.delete()
         return make_response(jsonify([]))
 
     # if request == get
@@ -91,12 +93,12 @@ def show_user(user_id):
 @app.route('/add_sample')
 def add_sample_user():
     user_id = User.query.count() + 1
-    user = User(
+    user = User()
+    user.create(
+        twitter_id=str(user_id)*10,
         name=str(user_id),
         token='token'
     )
-    db.session.add(user)
-    db.session.commit()
     return redirect(url_for('show_users'))
 
 
@@ -104,8 +106,7 @@ def add_sample_user():
 def delete_all_user():
 
     for user in User.query.all():
-        db.session.delete(user)
-        db.session.commit()
+        user.delete()
 
     return redirect(url_for('show_users'))
 
