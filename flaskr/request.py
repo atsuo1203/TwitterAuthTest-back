@@ -1,11 +1,13 @@
 from flask import request, redirect, url_for, make_response, jsonify
 from flaskr import app
+from flask_cors import CORS
 from flaskr.models import User
 import json
 import re
 import tweepy
 import yaml
 
+CORS(app)
 
 with open('flaskr/secret.yaml') as f:
     obj = yaml.load(f)
