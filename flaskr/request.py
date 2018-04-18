@@ -32,8 +32,8 @@ def authorize():
         print('Error! Failed to get request token.')
 
 
-@app.route('/', methods=['GET', 'POST'])
-def show_users():
+@app.route('/login')
+def login():
     oauth_token = request.args.get('oauth_token')
     oauth_verifier = request.args.get('oauth_verifier')
     try:
@@ -62,6 +62,13 @@ def show_users():
     except AttributeError:
         print('エラー')
 
+    url = 'http://localhost:3000/?' + 'access_token=' + str(auth.access_token) \
+          + '&access_token_secret=' + str(auth.access_token_secret)
+    return redirect(url)
+
+
+@app.route('/', methods=['GET', 'POST'])
+def show_users():
     if request.method == 'POST':
         data = json.loads(request.data.decode('utf-8'))
         twitter_id_list = db.session.query(User.twitter_id).all()
