@@ -45,7 +45,7 @@ def show_users():
             me = api.me()
             twitter_id_s = db.session.query(User.twitter_id).all()
             twitter_id_list = [user_id[0] for user_id in twitter_id_s]
-            if str(me.id) not in twitter_id_list:
+            if me.id not in twitter_id_list:
                 user = User(
                     twitter_id=me.id,
                     name=me.screen_name,
@@ -85,7 +85,7 @@ def show_users():
 
 @app.route('/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
 def show_user(user_id):
-    user = User.query.filter_by(id=user_id).first()
+    user = User.query.filter_by(twitter_id=user_id).first()
     if user is None:
         return make_response(jsonify([]))
 
@@ -111,7 +111,7 @@ def show_user(user_id):
 def add_sample_user():
     user_id = User.query.count() + 1
     user = User(
-        twitter_id=str(user_id)*10,
+        twitter_id=user_id*10,
         name=str(user_id),
         access_token='access_token',
         access_token_secret='access_token_secret'

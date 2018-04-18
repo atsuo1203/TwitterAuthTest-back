@@ -3,12 +3,12 @@ from flaskr import db
 
 class User(db.Model):
     __tablename__ = 'users'
-    twitter_id = db.Column(db.Text, primary_key=True)
+    twitter_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text)
     access_token = db.Column(db.Text)
     access_token_secret = db.Column(db.Text)
 
-    def __init__(self, twitter_id: str, name: str,
+    def __init__(self, twitter_id: int, name: str,
                  access_token: str, access_token_secret: str):
         self.twitter_id = twitter_id
         self.name = name
