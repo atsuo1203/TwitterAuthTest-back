@@ -36,6 +36,7 @@ def authorize():
 def login():
     oauth_token = request.args.get('oauth_token')
     oauth_verifier = request.args.get('oauth_verifier')
+    url = 'http://localhost:3000/'
     try:
         auth.request_token = {'oauth_token': oauth_token,
                               'oauth_token_secret': oauth_verifier}
@@ -54,6 +55,9 @@ def login():
                 )
                 db.session.add(user)
                 db.session.commit()
+            querys = '?name=' + str(me.screen_name) \
+                     + '&access_token=' + str(auth.access_token)
+            url += querys
             print('access_token')
             print(access_token)
         except tweepy.TweepError:
@@ -62,8 +66,6 @@ def login():
     except AttributeError:
         print('エラー')
 
-    url = 'http://localhost:3000/?' + 'access_token=' + str(auth.access_token) \
-          + '&access_token_secret=' + str(auth.access_token_secret)
     return redirect(url)
 
 
