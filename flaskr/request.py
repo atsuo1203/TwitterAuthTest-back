@@ -1,5 +1,5 @@
 from flask import request, redirect, url_for, make_response, jsonify
-from flaskr import app
+from flaskr import app, db
 from flask_cors import CORS
 from flaskr.models import User
 import json
@@ -43,13 +43,17 @@ def show_users():
             access_token = auth.get_access_token(oauth_verifier)
             api = tweepy.API(auth)
             me = api.me()
-            user = User()
-            user.create(
-                twitter_id=me.id,
-                name=me.screen_name,
-                access_token=auth.access_token,
-                access_token_secret=auth.access_token_secret
-            )
+            twitter_id_s = db.session.query(User.twitter_id).all()
+            twitter_id_list = [user_id[0] for user_id in twitter_id_s]
+            if str(me.id) not in twitter_id_list:
+                user = User(
+                    twitter_id=me.id,
+                    name=me.screen_name,
+                    access_token=auth.access_token,
+                    access_token_secret=auth.access_token_secret
+                )
+                db.session.add(user)
+                db.session.commit()
             print('access_token')
             print(access_token)
         except tweepy.TweepError:
@@ -60,13 +64,16 @@ def show_users():
 
     if request.method == 'POST':
         data = json.loads(request.data.decode('utf-8'))
-        user = User()
-        user.create(
-            twitter_id=data['twitter_id'],
-            name=data['name'],
-            access_token=data['access_token'],
-            access_token_secret=data['access_token_secret'],
-        )
+        twitter_id_list = db.session.query(User.twitter_id).all()
+        if data['twitter_id'] not in twitter_id_list:
+            user = User(
+                twitter_id=data['twitter_id'],
+                name=data['name'],
+                access_token=data['access_token'],
+                access_token_secret=data['access_token_secret'],
+            )
+            db.session.add(user)
+            db.session.commit()
 
     # if method == get
     users = User.query.all()
@@ -84,17 +91,16 @@ def show_user(user_id):
 
     if request.method == 'PUT':
         data = json.loads(request.data.decode('utf-8'))
-        update_dict = {
-            'twitter_id': data['twitter_id'],
-            'name': data['name'],
-            'access_token': data['access_token'],
-            'access_token_secret': data['access_token_secret'],
-        }
-        user.update(update_dict)
+        user.twitter_id = data['twitter_id']
+        user.name = data['name']
+        user.access_token = data['access_token']
+        user.access_token_secret = data['access_token_secret']
+        db.session.commit()
         return make_response(jsonify(user.to_json()))
 
     if request.method == 'DELETE':
-        user.delete()
+        db.session.delete(user)
+        db.session.commit()
         return make_response(jsonify([]))
 
     # if request == get
@@ -104,13 +110,14 @@ def show_user(user_id):
 @app.route('/add_sample')
 def add_sample_user():
     user_id = User.query.count() + 1
-    user = User()
-    user.create(
+    user = User(
         twitter_id=str(user_id)*10,
         name=str(user_id),
         access_token='access_token',
         access_token_secret='access_token_secret'
     )
+    db.session.add(user)
+    db.session.commit()
     return redirect(url_for('show_users'))
 
 
@@ -118,7 +125,8 @@ def add_sample_user():
 def delete_all_user():
 
     for user in User.query.all():
-        user.delete()
+        db.session.delete(user)
+        db.session.commit()
 
     return redirect(url_for('show_users'))
 
