@@ -1,5 +1,9 @@
 # TwitterAuthTest-back
 
+## 環境
+
+* python 3.6.3
+
 ## インストール
 
 ```
@@ -7,7 +11,7 @@ $ pip install -r requirements.txt
 $ python create.db
 ```
 
-## start
+## 実行
 
 ```
 $ python manage.py
