@@ -46,17 +46,21 @@ def login():
             me = api.me()
             twitter_id_s = db.session.query(User.twitter_id).all()
             twitter_id_list = [user_id[0] for user_id in twitter_id_s]
+            profile_url = str(me.profile_image_url).\
+                replace('normal.jpg', '400x400.jpg')
             if me.id not in twitter_id_list:
                 user = User(
                     twitter_id=me.id,
                     name=me.screen_name,
                     access_token=auth.access_token,
-                    access_token_secret=auth.access_token_secret
+                    access_token_secret=auth.access_token_secret,
+                    url=profile_url
                 )
                 db.session.add(user)
                 db.session.commit()
             querys = '?name=' + str(me.screen_name) \
-                     + '&access_token=' + str(auth.access_token)
+                     + '&access_token=' + str(auth.access_token) \
+                     + '&url=' + profile_url
             url += querys
             print('access_token')
             print(access_token)
@@ -80,6 +84,7 @@ def show_users():
                 name=data['name'],
                 access_token=data['access_token'],
                 access_token_secret=data['access_token_secret'],
+                url=data['url'],
             )
             db.session.add(user)
             db.session.commit()
@@ -123,7 +128,8 @@ def add_sample_user():
         twitter_id=user_id*10,
         name=str(user_id),
         access_token='access_token',
-        access_token_secret='access_token_secret'
+        access_token_secret='access_token_secret',
+        url='url'
     )
     db.session.add(user)
     db.session.commit()
