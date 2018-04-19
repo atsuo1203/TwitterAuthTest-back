@@ -3,11 +3,12 @@ from flaskr import app, db
 from flask_cors import CORS
 from flaskr.models import User
 import json
-import re
 import tweepy
 import yaml
 
 CORS(app)
+
+FRONT_URL = 'http://localhost:3000/'
 
 with open('flaskr/secret.yaml') as f:
     obj = yaml.load(f)
@@ -26,51 +27,44 @@ def authorize():
     '''
     try:
         redirect_url = auth.get_authorization_url()
-        url = re.sub('authorize', 'authenticate', redirect_url)
-        return redirect(url)
+        return redirect(redirect_url)
     except tweepy.TweepError:
         print('Error! Failed to get request token.')
 
 
 @app.route('/login')
 def login():
+    # 認証処理
     oauth_token = request.args.get('oauth_token')
     oauth_verifier = request.args.get('oauth_verifier')
-    url = 'http://localhost:3000/'
-    try:
-        auth.request_token = {'oauth_token': oauth_token,
-                              'oauth_token_secret': oauth_verifier}
-        try:
-            access_token = auth.get_access_token(oauth_verifier)
-            api = tweepy.API(auth)
-            me = api.me()
-            twitter_id_s = db.session.query(User.twitter_id).all()
-            twitter_id_list = [user_id[0] for user_id in twitter_id_s]
-            profile_url = str(me.profile_image_url).\
-                replace('normal.jpg', '400x400.jpg')
-            if me.id not in twitter_id_list:
-                user = User(
-                    twitter_id=me.id,
-                    name=me.screen_name,
-                    access_token=auth.access_token,
-                    access_token_secret=auth.access_token_secret,
-                    url=profile_url
-                )
-                db.session.add(user)
-                db.session.commit()
-            querys = '?name=' + str(me.screen_name) \
-                     + '&access_token=' + str(auth.access_token) \
-                     + '&url=' + profile_url
-            url += querys
-            print('access_token')
-            print(access_token)
-        except tweepy.TweepError:
-            print('Error! Failed to get access token.')
+    auth.request_token = {'oauth_token': oauth_token,
+                          'oauth_token_secret': oauth_verifier}
+    api = tweepy.API(auth)
+    auth.get_access_token(oauth_verifier)
+    me = api.me()
+    # frontにリダイレクトさせるurl作成
+    profile_url = str(me.profile_image_url).\
+        replace('normal.jpg', '400x400.jpg')
+    querys = '?name=' + str(me.screen_name) \
+             + '&access_token=' + str(auth.access_token) \
+             + '&url=' + profile_url
+    result_url = FRONT_URL + querys
 
-    except AttributeError:
-        print('エラー')
+    # dbへの保存処理
+    twitter_id_s = db.session.query(User.twitter_id).all()
+    twitter_id_list = [user_id[0] for user_id in twitter_id_s]
+    if me.id not in twitter_id_list:
+        user = User(
+            twitter_id=me.id,
+            name=me.screen_name,
+            access_token=auth.access_token,
+            access_token_secret=auth.access_token_secret,
+            url=profile_url
+        )
+        db.session.add(user)
+        db.session.commit()
 
-    return redirect(url)
+    return redirect(result_url)
 
 
 @app.route('/', methods=['GET', 'POST'])
